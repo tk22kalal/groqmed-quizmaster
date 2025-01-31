@@ -5,111 +5,142 @@ import { toast } from "sonner";
 
 interface QuizProps {
   subject: string;
+  chapter: string;
+  topic: string;
+  difficulty: string;
+  questionCount: string;
+  timeLimit: string;
 }
 
-export const Quiz = ({ subject }: QuizProps) => {
-  const [question, setQuestion] = useState<any>(null);
+interface Question {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+  subject: string;
+}
+
+export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeLimit }: QuizProps) => {
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState(0);
-  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [questionNumber, setQuestionNumber] = useState(1);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(
+    timeLimit !== "No Limit" ? parseInt(timeLimit) * 60 : null
+  );
+
+  useEffect(() => {
+    loadQuestion();
+  }, []);
+
+  useEffect(() => {
+    if (timeRemaining !== null && timeRemaining > 0) {
+      const timer = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev === null || prev <= 1) {
+            clearInterval(timer);
+            toast.error("Time's up!");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [timeRemaining]);
 
   const loadQuestion = async () => {
     const newQuestion = await generateQuestion(subject);
     if (newQuestion) {
-      setQuestion(newQuestion);
+      setCurrentQuestion(newQuestion);
       setSelectedAnswer(null);
       setShowExplanation(false);
     }
   };
 
-  useEffect(() => {
-    loadQuestion();
-  }, [subject]);
-
   const handleAnswerSelect = (answer: string) => {
-    if (selectedAnswer) return;
-    setSelectedAnswer(answer);
-    setShowExplanation(true);
-    setTotalQuestions(prev => prev + 1);
-    
-    if (answer === question.correctAnswer) {
-      setScore(prev => prev + 1);
-      toast.success("Correct answer!");
-    } else {
-      toast.error("Incorrect answer");
+    if (!selectedAnswer && timeRemaining !== 0) {
+      setSelectedAnswer(answer);
+      if (answer === currentQuestion?.correctAnswer) {
+        setScore(prev => prev + 1);
+      }
     }
   };
 
   const handleNext = () => {
+    if (questionCount !== "No Limit" && questionNumber >= parseInt(questionCount)) {
+      toast.success(`Quiz completed! Final score: ${score}/${questionNumber}`);
+      return;
+    }
+    setQuestionNumber(prev => prev + 1);
     loadQuestion();
   };
 
-  if (!question) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-medical-blue"></div>
-      </div>
-    );
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  if (!currentQuestion) {
+    return <div className="text-center">Loading question...</div>;
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-medical-blue">Subject: {subject}</h2>
-        <div className="text-right">
-          <p className="text-lg font-medium">
-            Score: {score}/{totalQuestions}
-          </p>
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="text-lg font-semibold">
+          Question {questionNumber} {questionCount !== "No Limit" && `of ${questionCount}`}
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-lg">Score: {score}</div>
+          {timeRemaining !== null && (
+            <div className="text-lg">Time: {formatTime(timeRemaining)}</div>
+          )}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
-        <p className="text-lg font-medium mb-4">{question.question}</p>
-
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">{currentQuestion.question}</h2>
         <div className="space-y-3">
-          {question.options.map((option: string, index: number) => {
-            const letter = option.charAt(0);
-            const isSelected = selectedAnswer === letter;
-            const isCorrect = question.correctAnswer === letter;
-            
-            return (
-              <button
-                key={index}
-                onClick={() => handleAnswerSelect(letter)}
-                disabled={!!selectedAnswer}
-                className={`w-full text-left p-3 rounded-md transition-colors ${
-                  isSelected
-                    ? isCorrect
-                      ? "bg-green-100 border-green-500"
-                      : "bg-red-100 border-red-500"
-                    : selectedAnswer && isCorrect
-                    ? "bg-green-100 border-green-500"
-                    : "bg-gray-50 hover:bg-gray-100"
-                } border ${
-                  isSelected ? "border-2" : "border"
-                }`}
-              >
-                {option}
-              </button>
-            );
-          })}
+          {currentQuestion.options.map((option, index) => (
+            <Button
+              key={index}
+              onClick={() => handleAnswerSelect(option[0])}
+              className={`w-full text-left justify-start ${
+                selectedAnswer === option[0]
+                  ? option[0] === currentQuestion.correctAnswer
+                    ? "bg-green-500 hover:bg-green-600"
+                    : "bg-red-500 hover:bg-red-600"
+                  : "bg-gray-100 hover:bg-gray-200"
+              }`}
+              disabled={!!selectedAnswer || timeRemaining === 0}
+            >
+              {option}
+            </Button>
+          ))}
         </div>
 
-        {showExplanation && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-md">
-            <h3 className="font-semibold mb-2">Explanation:</h3>
-            <p>{question.explanation}</p>
-          </div>
-        )}
-
         {selectedAnswer && (
-          <Button
-            onClick={handleNext}
-            className="w-full mt-4 bg-medical-blue hover:bg-blue-700"
-          >
-            Next Question
-          </Button>
+          <div className="mt-6">
+            <Button
+              onClick={() => setShowExplanation(!showExplanation)}
+              variant="outline"
+              className="mb-4"
+            >
+              {showExplanation ? "Hide" : "Show"} Explanation
+            </Button>
+            {showExplanation && (
+              <div className="bg-gray-50 p-4 rounded-md">
+                <p className="text-gray-700">{currentQuestion.explanation}</p>
+              </div>
+            )}
+            <Button onClick={handleNext} className="mt-4">
+              Next Question
+            </Button>
+          </div>
         )}
       </div>
     </div>
