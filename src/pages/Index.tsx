@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Quiz } from "@/components/Quiz";
+import { toast } from "sonner";
 
 const subjects = [
   "Complete MBBS",
@@ -42,6 +43,11 @@ const Index = () => {
   const apiKey = localStorage.getItem("GROQ_API_KEY");
 
   const handleStartQuiz = () => {
+    if (!apiKey) {
+      toast.error("Please enter your Groq API key first");
+      return;
+    }
+    
     if (!selectedSubject || !difficulty || !questionCount || !timeLimit) {
       toast.error("Please fill in all required fields");
       return;

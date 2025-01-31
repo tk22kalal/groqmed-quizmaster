@@ -28,6 +28,7 @@ export const generateQuestion = async (subject: string): Promise<Question | null
 
   try {
     console.log("Generating question for subject:", subject);
+    console.log("Making request to Groq API...");
     
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
@@ -54,22 +55,30 @@ export const generateQuestion = async (subject: string): Promise<Question | null
             }`
           }
         ],
-        temperature: 0.7
+        temperature: 0.7,
+        max_tokens: 1024
       }),
     });
 
     if (!response.ok) {
-      throw new Error("Failed to generate question");
+      console.error("Groq API error:", response.status, response.statusText);
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Error details:", errorData);
+      throw new Error(`API request failed: ${response.statusText}`);
     }
 
     const data: GroqResponse = await response.json();
-    console.log("Groq response:", data);
+    console.log("Groq API response received:", data);
     
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error("Invalid response format from API");
+    }
+
     const questionData = JSON.parse(data.choices[0].message.content);
     return questionData as Question;
   } catch (error) {
     console.error("Error generating question:", error);
-    toast.error("Failed to generate question. Please try again.");
+    toast.error("Failed to generate question. Please check your API key and try again.");
     return null;
   }
-}
+};
