@@ -29,15 +29,15 @@ const chapters = {
 
 const difficultyLevels = ["Easy", "Medium", "Hard"];
 const questionCounts = ["5", "10", "15", "20", "30", "50", "No Limit"];
-const timeLimits = ["10 min", "15 min", "30 min", "45 min", "60 min", "90 min", "120 min", "No Limit"];
+const timePerQuestion = ["30", "45", "60", "90", "120", "No Limit"];
 
 const Index = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [selectedChapter, setSelectedChapter] = useState<string>("");
   const [specificTopic, setSpecificTopic] = useState<string>("");
-  const [difficulty, setDifficulty] = useState<string>("");
-  const [questionCount, setQuestionCount] = useState<string>("");
-  const [timeLimit, setTimeLimit] = useState<string>("");
+  const [difficulty, setDifficulty] = useState<string>("easy");
+  const [questionCount, setQuestionCount] = useState<string>("No Limit");
+  const [timeLimit, setTimeLimit] = useState<string>("No Limit");
   const [quizStarted, setQuizStarted] = useState(false);
 
   const apiKey = localStorage.getItem("GROQ_API_KEY");
@@ -48,8 +48,8 @@ const Index = () => {
       return;
     }
     
-    if (!selectedSubject || !difficulty || !questionCount || !timeLimit) {
-      toast.error("Please fill in all required fields");
+    if (!selectedSubject) {
+      toast.error("Please select a subject");
       return;
     }
     setQuizStarted(true);
@@ -83,10 +83,10 @@ const Index = () => {
           <div className="space-y-2">
             <Label htmlFor="subject">Subject</Label>
             <Select onValueChange={setSelectedSubject} value={selectedSubject}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Select Subject" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white shadow-lg border-2">
                 {subjects.map((subject) => (
                   <SelectItem key={subject} value={subject}>
                     {subject}
@@ -103,10 +103,10 @@ const Index = () => {
               value={selectedChapter}
               disabled={!selectedSubject || selectedSubject === "Complete MBBS"}
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Select Chapter" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white shadow-lg border-2">
                 {selectedSubject && chapters[selectedSubject as keyof typeof chapters]?.map((chapter) => (
                   <SelectItem key={chapter} value={chapter}>
                     {chapter}
@@ -124,16 +124,17 @@ const Index = () => {
               value={specificTopic}
               onChange={(e) => setSpecificTopic(e.target.value)}
               disabled={!selectedChapter || selectedChapter === "Complete Subject"}
+              className="bg-white"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="difficulty">Difficulty Level</Label>
             <Select onValueChange={setDifficulty} value={difficulty}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Select Difficulty" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white shadow-lg border-2">
                 {difficultyLevels.map((level) => (
                   <SelectItem key={level} value={level.toLowerCase()}>
                     {level}
@@ -146,10 +147,10 @@ const Index = () => {
           <div className="space-y-2">
             <Label htmlFor="questionCount">Number of Questions</Label>
             <Select onValueChange={setQuestionCount} value={questionCount}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Select Question Count" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white shadow-lg border-2">
                 {questionCounts.map((count) => (
                   <SelectItem key={count} value={count}>
                     {count}
@@ -160,15 +161,15 @@ const Index = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="timeLimit">Time Limit</Label>
+            <Label htmlFor="timeLimit">Time per Question (seconds)</Label>
             <Select onValueChange={setTimeLimit} value={timeLimit}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Time Limit" />
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Time per Question" />
               </SelectTrigger>
-              <SelectContent>
-                {timeLimits.map((time) => (
+              <SelectContent className="bg-white shadow-lg border-2">
+                {timePerQuestion.map((time) => (
                   <SelectItem key={time} value={time}>
-                    {time}
+                    {time} {time !== "No Limit" ? "seconds" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
