@@ -18,7 +18,7 @@ interface Question {
   subject: string;
 }
 
-export const generateQuestion = async (subject: string): Promise<Question | null> => {
+export const generateQuestion = async (subject: string, difficulty: string = 'easy'): Promise<Question | null> => {
   const apiKey = localStorage.getItem("GROQ_API_KEY");
   
   if (!apiKey) {
@@ -26,8 +26,21 @@ export const generateQuestion = async (subject: string): Promise<Question | null
     return null;
   }
 
+  const getDifficultyPrompt = (level: string) => {
+    switch(level.toLowerCase()) {
+      case 'easy':
+        return "Generate a basic MBBS level question from standard medical reference books.";
+      case 'medium':
+        return "Generate a moderate difficulty question that includes both theoretical and clinical aspects.";
+      case 'hard':
+        return "Generate a complex clinical case-based question suitable for advanced NEET PG/FMGE/INICET preparation.";
+      default:
+        return "Generate a basic MBBS level question.";
+    }
+  };
+
   try {
-    console.log("Generating question for subject:", subject);
+    console.log(`Generating ${difficulty} question for subject:`, subject);
     console.log("Making request to Groq API...");
     
     const response = await fetch(GROQ_API_URL, {
@@ -41,11 +54,11 @@ export const generateQuestion = async (subject: string): Promise<Question | null
         messages: [
           {
             role: "system",
-            content: "You are a medical education expert. Generate a NEET PG/INICET style MCQ question."
+            content: `You are a medical education expert specializing in NEET PG, FMGE, and INICET exam preparation. ${getDifficultyPrompt(difficulty)}`
           },
           {
             role: "user",
-            content: `Generate a multiple choice question for ${subject} in JSON format with the following structure:
+            content: `Generate a ${difficulty} level multiple choice question for ${subject} in JSON format with the following structure:
             {
               "question": "question text",
               "options": ["A) option1", "B) option2", "C) option3", "D) option4"],

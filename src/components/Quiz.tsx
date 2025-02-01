@@ -52,7 +52,7 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
   }, [timeRemaining]);
 
   const loadQuestion = async () => {
-    const newQuestion = await generateQuestion(subject);
+    const newQuestion = await generateQuestion(subject, difficulty);
     if (newQuestion) {
       setCurrentQuestion(newQuestion);
       setSelectedAnswer(null);
