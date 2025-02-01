@@ -52,7 +52,9 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
   }, [timeRemaining]);
 
   const loadQuestion = async () => {
-    const newQuestion = await generateQuestion(subject, difficulty);
+    const topicString = topic ? `${chapter} - ${topic}` : chapter;
+    const scope = chapter === "Complete Subject" ? subject : `${subject} - ${topicString}`;
+    const newQuestion = await generateQuestion(scope, difficulty);
     if (newQuestion) {
       setCurrentQuestion(newQuestion);
       setSelectedAnswer(null);
@@ -92,11 +94,11 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
     }
     
     if (isCorrect) {
-      return "bg-green-100/50 text-black";
+      return "bg-[#F2FCE2]/70 text-black"; // Soft green with 70% opacity
     }
     
     if (selectedAnswer === option[0] && !isCorrect) {
-      return "bg-red-100/50 text-black";
+      return "bg-[#FFDEE2]/70 text-black"; // Soft red with 70% opacity
     }
     
     return "bg-white text-black";

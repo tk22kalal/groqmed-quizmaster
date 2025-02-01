@@ -18,7 +18,7 @@ interface Question {
   subject: string;
 }
 
-export const generateQuestion = async (subject: string, difficulty: string = 'easy'): Promise<Question | null> => {
+export const generateQuestion = async (scope: string, difficulty: string = 'easy'): Promise<Question | null> => {
   const apiKey = localStorage.getItem("GROQ_API_KEY");
   
   if (!apiKey) {
@@ -40,7 +40,7 @@ export const generateQuestion = async (subject: string, difficulty: string = 'ea
   };
 
   try {
-    console.log(`Generating ${difficulty} question for subject:`, subject);
+    console.log(`Generating ${difficulty} question for scope:`, scope);
     console.log("Making request to Groq API...");
     
     const response = await fetch(GROQ_API_URL, {
@@ -58,13 +58,13 @@ export const generateQuestion = async (subject: string, difficulty: string = 'ea
           },
           {
             role: "user",
-            content: `Generate a ${difficulty} level multiple choice question for ${subject} in JSON format with the following structure:
+            content: `Generate a ${difficulty} level multiple choice question for ${scope} in JSON format with the following structure:
             {
               "question": "question text",
               "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
               "correctAnswer": "A", // just the letter
               "explanation": "detailed explanation",
-              "subject": "${subject}"
+              "subject": "${scope}"
             }`
           }
         ],
