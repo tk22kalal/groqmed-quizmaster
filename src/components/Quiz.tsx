@@ -94,11 +94,11 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
     }
     
     if (isCorrect) {
-      return "bg-[#E7F8E9]/80 text-black border-[#86D492]"; // Softer green with 80% opacity and green border
+      return "bg-[#E7F8E9]/90 text-black border-[#86D492]"; // Increased opacity to 90%
     }
     
     if (selectedAnswer === option[0] && !isCorrect) {
-      return "bg-[#FFE9E9]/80 text-black border-[#FF8989]"; // Softer red with 80% opacity and red border
+      return "bg-[#FFE9E9]/90 text-black border-[#FF8989]"; // Using red shade with 90% opacity
     }
     
     return "bg-white text-black";
@@ -129,10 +129,10 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
             <Button
               key={index}
               onClick={() => handleAnswerSelect(option[0])}
-              className={`w-full text-left justify-start border ${getOptionStyle(option)}`}
+              className={`w-full text-left justify-start border ${getOptionStyle(option)} overflow-x-auto whitespace-normal min-h-[48px] h-auto px-4 py-3`}
               disabled={!!selectedAnswer || timeRemaining === 0}
             >
-              {option}
+              <span className="break-words">{option}</span>
             </Button>
           ))}
         </div>
