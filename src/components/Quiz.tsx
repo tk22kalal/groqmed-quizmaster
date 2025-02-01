@@ -27,7 +27,7 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
   const [score, setScore] = useState(0);
   const [questionNumber, setQuestionNumber] = useState(1);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(
-    timeLimit !== "No Limit" ? parseInt(timeLimit) * 60 : null
+    timeLimit !== "No Limit" ? parseInt(timeLimit) : null
   );
 
   useEffect(() => {
@@ -84,6 +84,24 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const getOptionStyle = (option: string) => {
+    const isCorrect = option[0] === currentQuestion?.correctAnswer;
+    
+    if (!selectedAnswer) {
+      return "bg-white text-black hover:bg-gray-100";
+    }
+    
+    if (isCorrect) {
+      return "bg-green-100/50 text-black";
+    }
+    
+    if (selectedAnswer === option[0] && !isCorrect) {
+      return "bg-red-100/50 text-black";
+    }
+    
+    return "bg-white text-black";
+  };
+
   if (!currentQuestion) {
     return <div className="text-center">Loading question...</div>;
   }
@@ -109,13 +127,7 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
             <Button
               key={index}
               onClick={() => handleAnswerSelect(option[0])}
-              className={`w-full text-left justify-start ${
-                selectedAnswer === option[0]
-                  ? option[0] === currentQuestion.correctAnswer
-                    ? "bg-green-500 hover:bg-green-600"
-                    : "bg-red-500 hover:bg-red-600"
-                  : "bg-gray-100 hover:bg-gray-200"
-              }`}
+              className={`w-full text-left justify-start ${getOptionStyle(option)}`}
               disabled={!!selectedAnswer || timeRemaining === 0}
             >
               {option}
