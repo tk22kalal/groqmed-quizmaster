@@ -18,6 +18,22 @@ interface Question {
   subject: string;
 }
 
+const getRandomQuestionType = () => {
+  const questionTypes = [
+    "anatomy and structure identification",
+    "physiological functions",
+    "clinical correlations",
+    "embryological development",
+    "nerve pathways and innervation",
+    "blood supply and vasculature",
+    "anatomical variations",
+    "surgical landmarks",
+    "diagnostic features",
+    "pathological conditions"
+  ];
+  return questionTypes[Math.floor(Math.random() * questionTypes.length)];
+};
+
 export const generateQuestion = async (scope: string, difficulty: string = 'easy'): Promise<Question | null> => {
   const apiKey = localStorage.getItem("GROQ_API_KEY");
   
@@ -29,18 +45,21 @@ export const generateQuestion = async (scope: string, difficulty: string = 'easy
   const getDifficultyPrompt = (level: string) => {
     switch(level.toLowerCase()) {
       case 'easy':
-        return "Generate a basic MBBS level question from standard medical reference books.";
+        return "Generate a basic MBBS level question focusing on fundamental concepts.";
       case 'medium':
-        return "Generate a moderate difficulty question that includes both theoretical and clinical aspects.";
+        return "Generate a moderate difficulty question that combines theoretical knowledge with clinical applications.";
       case 'hard':
-        return "Generate a complex clinical case-based question suitable for advanced NEET PG/FMGE/INICET preparation.";
+        return "Generate a complex clinical scenario-based question that requires integration of multiple concepts.";
       default:
         return "Generate a basic MBBS level question.";
     }
   };
 
+  const questionType = getRandomQuestionType();
+
   try {
     console.log(`Generating ${difficulty} question for scope:`, scope);
+    console.log("Question type:", questionType);
     console.log("Making request to Groq API...");
     
     const response = await fetch(GROQ_API_URL, {
@@ -58,7 +77,7 @@ export const generateQuestion = async (scope: string, difficulty: string = 'easy
           },
           {
             role: "user",
-            content: `Generate a ${difficulty} level multiple choice question for ${scope} in JSON format with the following structure:
+            content: `Generate a ${difficulty} level multiple choice question about ${questionType} in ${scope}. The question should be unique and not repetitive. Format the response in JSON with the following structure:
             {
               "question": "question text",
               "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
@@ -68,7 +87,7 @@ export const generateQuestion = async (scope: string, difficulty: string = 'easy
             }`
           }
         ],
-        temperature: 0.7,
+        temperature: 0.9,
         max_tokens: 1024
       }),
     });
