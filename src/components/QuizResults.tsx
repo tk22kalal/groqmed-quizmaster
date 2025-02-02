@@ -1,9 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 interface QuizResultsProps {
   score: number;
@@ -26,7 +31,6 @@ export const QuizResults = ({
 }: QuizResultsProps) => {
   const [userName, setUserName] = useState<string>("");
   const percentage = Math.round((score / totalQuestions) * 100);
-  const supabase = createClientComponentClient();
   
   useEffect(() => {
     const saveResult = async () => {

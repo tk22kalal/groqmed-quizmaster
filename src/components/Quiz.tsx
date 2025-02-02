@@ -120,6 +120,10 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
         score={score} 
         totalQuestions={parseInt(questionCount)} 
         onRestartQuiz={handleRestartQuiz}
+        subject={subject}
+        chapter={chapter}
+        topic={topic}
+        difficulty={difficulty}
       />
     );
   }
