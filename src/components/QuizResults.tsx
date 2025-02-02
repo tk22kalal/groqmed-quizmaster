@@ -5,6 +5,9 @@ import { createClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+console.log('QuizResults - Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+console.log('QuizResults - Supabase Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
+
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
