@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { generateQuestion } from "@/services/groqService";
 import { toast } from "sonner";
+import { QuizResults } from "./QuizResults";
 
 interface QuizProps {
   subject: string;
@@ -29,6 +30,7 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
   const [timeRemaining, setTimeRemaining] = useState<number | null>(
     timeLimit !== "No Limit" ? parseInt(timeLimit) : null
   );
+  const [isQuizComplete, setIsQuizComplete] = useState(false);
 
   useEffect(() => {
     loadQuestion();
@@ -73,10 +75,18 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
 
   const handleNext = () => {
     if (questionCount !== "No Limit" && questionNumber >= parseInt(questionCount)) {
-      toast.success(`Quiz completed! Final score: ${score}/${questionNumber}`);
+      setIsQuizComplete(true);
       return;
     }
     setQuestionNumber(prev => prev + 1);
+    loadQuestion();
+  };
+
+  const handleRestartQuiz = () => {
+    setScore(0);
+    setQuestionNumber(1);
+    setIsQuizComplete(false);
+    setTimeRemaining(timeLimit !== "No Limit" ? parseInt(timeLimit) : null);
     loadQuestion();
   };
 
@@ -87,11 +97,11 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
   };
 
   const getOptionStyle = (option: string) => {
-    const isCorrect = option[0] === currentQuestion?.correctAnswer;
-    
     if (!selectedAnswer) {
       return "bg-white text-black hover:bg-gray-100";
     }
+    
+    const isCorrect = option[0] === currentQuestion?.correctAnswer;
     
     if (isCorrect) {
       return "bg-[#E7F8E9] text-black border-[#86D492]";
@@ -103,6 +113,16 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
     
     return "bg-white text-black";
   };
+
+  if (isQuizComplete) {
+    return (
+      <QuizResults 
+        score={score} 
+        totalQuestions={parseInt(questionCount)} 
+        onRestartQuiz={handleRestartQuiz}
+      />
+    );
+  }
 
   if (!currentQuestion) {
     return <div className="text-center">Loading question...</div>;
