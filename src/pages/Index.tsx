@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ApiKeyInput } from "@/components/ApiKeyInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Quiz } from "@/components/Quiz";
+import { AuthForm } from "@/components/AuthForm";
 import { toast } from "sonner";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 const subjects = [
   "Complete MBBS",
@@ -39,8 +41,25 @@ const Index = () => {
   const [questionCount, setQuestionCount] = useState<string>("No Limit");
   const [timeLimit, setTimeLimit] = useState<string>("No Limit");
   const [quizStarted, setQuizStarted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const apiKey = localStorage.getItem("GROQ_API_KEY");
+  const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    };
+    
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleStartQuiz = () => {
     if (!apiKey) {
@@ -52,11 +71,26 @@ const Index = () => {
       toast.error("Please select a subject");
       return;
     }
+
+    if (!isAuthenticated) {
+      toast.error("Please login or create an account first");
+      return;
+    }
+
     setQuizStarted(true);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logged out successfully");
   };
 
   if (!apiKey) {
     return <ApiKeyInput />;
+  }
+
+  if (!isAuthenticated) {
+    return <AuthForm onAuthSuccess={() => setIsAuthenticated(true)} />;
   }
 
   if (quizStarted) {
@@ -75,9 +109,14 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md space-y-6">
-        <h1 className="text-3xl font-bold text-medical-blue mb-8 text-center">
-          NEET PG Quiz Setup
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-medical-blue">
+            NEET PG Quiz Setup
+          </h1>
+          <Button onClick={handleLogout} variant="outline">
+            Logout
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
