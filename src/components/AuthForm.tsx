@@ -1,18 +1,10 @@
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-console.log('Supabase Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 export const AuthForm = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +15,7 @@ export const AuthForm = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
   const [collegeName, setCollegeName] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [passwordError, setPasswordError] = useState("");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -36,8 +29,22 @@ export const AuthForm = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
     }
   };
 
+  const validatePassword = (pass: string) => {
+    if (pass.length < 6) {
+      setPasswordError("Password must be at least 6 characters long");
+      return false;
+    }
+    setPasswordError("");
+    return true;
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSignUp && !validatePassword(password)) {
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -60,7 +67,10 @@ export const AuthForm = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
               .from('avatars')
               .upload(fileName, avatarFile);
               
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+              console.error('Storage error:', uploadError);
+              throw new Error('Failed to upload profile picture');
+            }
             
             const { data: { publicUrl } } = supabase.storage
               .from('avatars')
@@ -95,6 +105,7 @@ export const AuthForm = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
         onAuthSuccess();
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast.error(error.message);
     } finally {
       setIsLoading(false);
@@ -169,9 +180,15 @@ export const AuthForm = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (isSignUp) validatePassword(e.target.value);
+                }}
                 required
               />
+              {passwordError && (
+                <p className="text-sm text-red-500">{passwordError}</p>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Loading..." : isSignUp ? "Sign Up" : "Login"}
