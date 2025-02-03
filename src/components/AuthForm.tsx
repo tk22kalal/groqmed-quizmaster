@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
 console.log('Supabase Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
@@ -19,6 +20,21 @@ export const AuthForm = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [collegeName, setCollegeName] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,19 +42,47 @@ export const AuthForm = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
     
     try {
       if (isSignUp) {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: {
-              name: name,
-            },
-          },
         });
         
         if (signUpError) throw signUpError;
         
-        toast.success("Check your email to confirm your account!");
+        if (signUpData.user) {
+          let avatarUrl = null;
+          
+          if (avatarFile) {
+            const fileExt = avatarFile.name.split('.').pop();
+            const fileName = `${signUpData.user.id}.${fileExt}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('avatars')
+              .upload(fileName, avatarFile);
+              
+            if (uploadError) throw uploadError;
+            
+            const { data: { publicUrl } } = supabase.storage
+              .from('avatars')
+              .getPublicUrl(fileName);
+              
+            avatarUrl = publicUrl;
+          }
+          
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: signUpData.user.id,
+              name,
+              college_name: collegeName,
+              avatar_url: avatarUrl,
+            });
+            
+          if (profileError) throw profileError;
+        }
+        
+        toast.success("Account created successfully!");
+        onAuthSuccess();
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -66,16 +110,48 @@ export const AuthForm = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
         <CardContent>
           <form onSubmit={handleAuth} className="space-y-4">
             {isSignUp && (
-              <div className="space-y-2">
-                <label htmlFor="name">Name</label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required={isSignUp}
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <label htmlFor="avatar" className="block text-sm font-medium">
+                    Profile Picture
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage src={avatarPreview} />
+                      <AvatarFallback>
+                        {name ? name[0].toUpperCase() : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Input
+                      id="avatar"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="max-w-[200px]"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="name">Name</label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required={isSignUp}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="collegeName">College Name</label>
+                  <Input
+                    id="collegeName"
+                    type="text"
+                    value={collegeName}
+                    onChange={(e) => setCollegeName(e.target.value)}
+                    required={isSignUp}
+                  />
+                </div>
+              </>
             )}
             <div className="space-y-2">
               <label htmlFor="email">Email</label>
