@@ -8,6 +8,7 @@ import { Quiz } from "@/components/Quiz";
 import { AuthForm } from "@/components/AuthForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const subjects = [
   "Complete MBBS",
@@ -42,32 +43,66 @@ const Index = () => {
   const [timeLimit, setTimeLimit] = useState<string>("No Limit");
   const [quizStarted, setQuizStarted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasApiKey, setHasApiKey] = useState(false);
-
-  const apiKey = localStorage.getItem("GROQ_API_KEY");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-      
-      // Check if API key exists
-      const apiKey = localStorage.getItem("GROQ_API_KEY");
-      setHasApiKey(!!apiKey);
+      try {
+        // Clear any existing session first
+        const existingSession = await supabase.auth.getSession();
+        if (existingSession.error) {
+          await supabase.auth.signOut();
+        }
+
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+          console.error("Auth error:", error);
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
+
+        setIsAuthenticated(!!user);
+        
+        // Check if API key exists
+        const apiKey = localStorage.getItem("GROQ_API_KEY");
+        setHasApiKey(!!apiKey);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     checkAuth();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+        navigate('/');
+      } else if (event === 'SIGNED_IN') {
+        setIsAuthenticated(true);
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Logged out successfully");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      toast.success("Logged out successfully");
+      navigate('/');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast.error(error.message);
+    }
   };
 
   const handleApiKeySaved = () => {
@@ -87,6 +122,10 @@ const Index = () => {
 
     setQuizStarted(true);
   };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
 
   // Show auth form if not authenticated
   if (!isAuthenticated) {
