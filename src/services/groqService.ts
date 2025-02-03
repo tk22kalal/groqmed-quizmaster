@@ -42,6 +42,11 @@ export const generateQuestion = async (scope: string, difficulty: string = 'easy
     return null;
   }
 
+  // Clean the API key to remove any potential whitespace
+  const cleanedApiKey = apiKey.trim();
+  console.log("API Key length:", cleanedApiKey.length);
+  console.log("API Key starts with gsk_:", cleanedApiKey.startsWith('gsk_'));
+
   const getDifficultyPrompt = (level: string) => {
     switch(level.toLowerCase()) {
       case 'easy':
@@ -66,7 +71,7 @@ export const generateQuestion = async (scope: string, difficulty: string = 'easy
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${cleanedApiKey}`
       },
       body: JSON.stringify({
         model: "mixtral-8x7b-32768",
@@ -92,25 +97,32 @@ export const generateQuestion = async (scope: string, difficulty: string = 'easy
       }),
     });
 
+    console.log("Response status:", response.status);
+    
     if (!response.ok) {
-      console.error("Groq API error:", response.status, response.statusText);
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Error details:", errorData);
-      throw new Error(`API request failed: ${response.statusText}`);
+      const errorData = await response.json();
+      console.error("API Error details:", errorData);
+      throw new Error(errorData.error?.message || `API request failed: ${response.statusText}`);
     }
 
     const data: GroqResponse = await response.json();
-    console.log("Groq API response received:", data);
+    console.log("Groq API response received");
     
     if (!data.choices?.[0]?.message?.content) {
       throw new Error("Invalid response format from API");
     }
 
-    const questionData = JSON.parse(data.choices[0].message.content);
-    return questionData as Question;
-  } catch (error) {
+    try {
+      const questionData = JSON.parse(data.choices[0].message.content);
+      return questionData as Question;
+    } catch (parseError) {
+      console.error("Error parsing API response:", parseError);
+      console.log("Raw response content:", data.choices[0].message.content);
+      throw new Error("Failed to parse API response");
+    }
+  } catch (error: any) {
     console.error("Error generating question:", error);
-    toast.error("Failed to generate question. Please check your API key and try again.");
+    toast.error(error.message || "Failed to generate question. Please check your API key and try again.");
     return null;
   }
 };
