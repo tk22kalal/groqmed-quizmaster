@@ -1,10 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-export const ApiKeyInput = () => {
+interface ApiKeyInputProps {
+  onSave: () => void;
+}
+
+export const ApiKeyInput = ({ onSave }: ApiKeyInputProps) => {
   const [apiKey, setApiKey] = useState("");
+  const [savedKey, setSavedKey] = useState("");
+
+  useEffect(() => {
+    const existingKey = localStorage.getItem("GROQ_API_KEY");
+    if (existingKey) {
+      // Show only last 4 characters of the key
+      setSavedKey(`...${existingKey.slice(-4)}`);
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,7 +27,7 @@ export const ApiKeyInput = () => {
     }
     localStorage.setItem("GROQ_API_KEY", apiKey.trim());
     toast.success("API key saved successfully");
-    setApiKey("");
+    onSave();
   };
 
   return (
@@ -24,7 +37,7 @@ export const ApiKeyInput = () => {
         type="password"
         value={apiKey}
         onChange={(e) => setApiKey(e.target.value)}
-        placeholder="Enter your Groq API key"
+        placeholder={savedKey || "Enter your Groq API key"}
         className="w-full"
       />
       <Button type="submit" className="w-full bg-medical-blue hover:bg-blue-700">

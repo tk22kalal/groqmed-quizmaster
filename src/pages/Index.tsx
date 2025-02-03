@@ -42,6 +42,7 @@ const Index = () => {
   const [timeLimit, setTimeLimit] = useState<string>("No Limit");
   const [quizStarted, setQuizStarted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
 
   const apiKey = localStorage.getItem("GROQ_API_KEY");
 
@@ -49,6 +50,10 @@ const Index = () => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
+      
+      // Check if API key exists
+      const apiKey = localStorage.getItem("GROQ_API_KEY");
+      setHasApiKey(!!apiKey);
     };
     
     checkAuth();
@@ -60,36 +65,23 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleStartQuiz = () => {
-    if (!apiKey) {
-      toast.error("Please enter your Groq API key first");
-      return;
-    }
-    
-    if (!selectedSubject) {
-      toast.error("Please select a subject");
-      return;
-    }
-
-    if (!isAuthenticated) {
-      toast.error("Please login or create an account first");
-      return;
-    }
-
-    setQuizStarted(true);
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Logged out successfully");
   };
 
-  if (!apiKey) {
-    return <ApiKeyInput />;
-  }
+  const handleApiKeySaved = () => {
+    setHasApiKey(true);
+  };
 
+  // Show auth form if not authenticated
   if (!isAuthenticated) {
     return <AuthForm onAuthSuccess={() => setIsAuthenticated(true)} />;
+  }
+
+  // Show API key input if authenticated but no API key
+  if (!hasApiKey) {
+    return <ApiKeyInput onSave={handleApiKeySaved} />;
   }
 
   if (quizStarted) {
