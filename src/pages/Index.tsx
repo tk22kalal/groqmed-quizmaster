@@ -74,6 +74,20 @@ const Index = () => {
     setHasApiKey(true);
   };
 
+  const handleStartQuiz = () => {
+    if (!selectedSubject) {
+      toast.error("Please select a subject");
+      return;
+    }
+
+    if (selectedSubject !== "Complete MBBS" && !selectedChapter) {
+      toast.error("Please select a chapter");
+      return;
+    }
+
+    setQuizStarted(true);
+  };
+
   // Show auth form if not authenticated
   if (!isAuthenticated) {
     return <AuthForm onAuthSuccess={() => setIsAuthenticated(true)} />;
