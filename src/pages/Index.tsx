@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Quiz } from "@/components/Quiz";
 import { AuthForm } from "@/components/AuthForm";
 import { toast } from "sonner";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "@/integrations/supabase/client";
 
 const subjects = [
   "Complete MBBS",
@@ -44,7 +44,6 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const apiKey = localStorage.getItem("GROQ_API_KEY");
-  const supabase = createClientComponentClient();
 
   useEffect(() => {
     const checkAuth = async () => {
