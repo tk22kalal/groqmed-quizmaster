@@ -19,43 +19,56 @@ export const ApiKeyInput = ({ onSave }: ApiKeyInputProps) => {
   }, []);
 
   const validateApiKey = (key: string) => {
+    // Remove any whitespace from the key
+    const cleanKey = key.replace(/\s+/g, '');
+    console.log("Validating key length:", cleanKey.length);
+    console.log("Key starts with gsk_:", cleanKey.startsWith('gsk_'));
+    
     // Basic validation for Groq API key format
     const groqKeyPattern = /^gsk_[A-Za-z0-9]{48}$/;
-    return groqKeyPattern.test(key.trim());
+    const isValid = groqKeyPattern.test(cleanKey);
+    console.log("Key matches pattern:", isValid);
+    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedKey = apiKey.trim();
+    // Clean the key by removing any whitespace
+    const cleanedKey = apiKey.replace(/\s+/g, '');
     
-    if (!trimmedKey) {
+    if (!cleanedKey) {
       toast.error("Please enter an API key");
       return;
     }
 
-    if (!validateApiKey(trimmedKey)) {
+    if (!validateApiKey(cleanedKey)) {
       toast.error("Invalid Groq API key format. It should start with 'gsk_' followed by 48 characters");
       return;
     }
 
     // Test the API key with a simple request
     try {
+      console.log("Making test request to Groq API...");
       const response = await fetch("https://api.groq.com/openai/v1/models", {
         headers: {
-          Authorization: `Bearer ${trimmedKey}`,
+          Authorization: `Bearer ${cleanedKey}`,
         },
       });
 
+      console.log("API Response status:", response.status);
+      
       if (!response.ok) {
-        throw new Error("Invalid API key");
+        const errorData = await response.json();
+        console.error("API Error details:", errorData);
+        throw new Error(errorData.error?.message || "Invalid API key");
       }
 
-      localStorage.setItem("GROQ_API_KEY", trimmedKey);
+      localStorage.setItem("GROQ_API_KEY", cleanedKey);
       toast.success("API key validated and saved successfully");
       onSave();
-    } catch (error) {
+    } catch (error: any) {
       console.error("API key validation error:", error);
-      toast.error("Invalid API key. Please check your key and try again");
+      toast.error(error.message || "Invalid API key. Please check your key and try again");
     }
   };
 
