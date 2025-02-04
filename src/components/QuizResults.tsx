@@ -4,6 +4,7 @@ import { Trophy } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { UserProfile } from "./UserProfile";
 
 console.log('QuizResults - Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
 console.log('QuizResults - Supabase Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
@@ -78,7 +79,10 @@ export const QuizResults = ({
   
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <Card className="text-center">
+      <div className="absolute top-4 right-4">
+        <UserProfile />
+      </div>
+      <Card className="text-center mt-16">
         <CardHeader>
           <CardTitle className="flex items-center justify-center gap-2">
             <Trophy className="h-8 w-8 text-yellow-500" />

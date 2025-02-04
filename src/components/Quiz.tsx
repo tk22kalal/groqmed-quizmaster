@@ -133,7 +133,7 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6 mt-16">
       <div className="flex justify-between items-center">
         <div className="text-lg font-semibold">
           Question {questionNumber} {questionCount !== "No Limit" && `of ${questionCount}`}
