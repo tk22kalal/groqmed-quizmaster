@@ -22,13 +22,8 @@ export const ApiKeyInput = ({ onSave }: ApiKeyInputProps) => {
 
   const validateApiKey = (key: string) => {
     const cleanKey = key.replace(/\s+/g, '');
-    console.log("Validating key length:", cleanKey.length);
-    console.log("Key starts with gsk_:", cleanKey.startsWith('gsk_'));
-    
-    const groqKeyPattern = /^gsk_[A-Za-z0-9]{48}$/;
-    const isValid = groqKeyPattern.test(cleanKey);
-    console.log("Key matches pattern:", isValid);
-    return isValid;
+    console.log("Validating key starts with gsk_:", cleanKey.startsWith('gsk_'));
+    return cleanKey.startsWith('gsk_');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +36,7 @@ export const ApiKeyInput = ({ onSave }: ApiKeyInputProps) => {
     }
 
     if (!validateApiKey(cleanedKey)) {
-      toast.error("Invalid Groq API key format. It should start with 'gsk_' followed by 48 characters");
+      toast.error("Invalid Groq API key format. It should start with 'gsk_'");
       return;
     }
 
