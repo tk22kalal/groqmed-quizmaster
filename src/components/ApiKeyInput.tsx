@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface ApiKeyInputProps {
   onSave: () => void;
@@ -10,6 +11,7 @@ interface ApiKeyInputProps {
 export const ApiKeyInput = ({ onSave }: ApiKeyInputProps) => {
   const [apiKey, setApiKey] = useState("");
   const [savedKey, setSavedKey] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const existingKey = localStorage.getItem("GROQ_API_KEY");
@@ -19,12 +21,10 @@ export const ApiKeyInput = ({ onSave }: ApiKeyInputProps) => {
   }, []);
 
   const validateApiKey = (key: string) => {
-    // Remove any whitespace from the key
     const cleanKey = key.replace(/\s+/g, '');
     console.log("Validating key length:", cleanKey.length);
     console.log("Key starts with gsk_:", cleanKey.startsWith('gsk_'));
     
-    // Basic validation for Groq API key format
     const groqKeyPattern = /^gsk_[A-Za-z0-9]{48}$/;
     const isValid = groqKeyPattern.test(cleanKey);
     console.log("Key matches pattern:", isValid);
@@ -33,7 +33,6 @@ export const ApiKeyInput = ({ onSave }: ApiKeyInputProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Clean the key by removing any whitespace
     const cleanedKey = apiKey.replace(/\s+/g, '');
     
     if (!cleanedKey) {
@@ -46,7 +45,6 @@ export const ApiKeyInput = ({ onSave }: ApiKeyInputProps) => {
       return;
     }
 
-    // Test the API key with a simple request
     try {
       console.log("Making test request to Groq API...");
       const response = await fetch("https://api.groq.com/openai/v1/models", {
@@ -66,6 +64,8 @@ export const ApiKeyInput = ({ onSave }: ApiKeyInputProps) => {
       localStorage.setItem("GROQ_API_KEY", cleanedKey);
       toast.success("API key validated and saved successfully");
       onSave();
+      // Redirect to the question settings page after successful save
+      navigate("/");
     } catch (error: any) {
       console.error("API key validation error:", error);
       toast.error(error.message || "Invalid API key. Please check your key and try again");
