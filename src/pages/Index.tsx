@@ -82,8 +82,9 @@ const Index = () => {
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session);
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
+        localStorage.removeItem("GROQ_API_KEY"); // Clear API key on logout
         navigate('/');
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(true);
