@@ -153,7 +153,7 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
             <Button
               key={index}
               onClick={() => handleAnswerSelect(option[0])}
-              className={`w-full text-left justify-start border ${getOptionStyle(option)} overflow-x-auto whitespace-normal min-h-[48px] h-auto px-4 py-3 hover:bg-gray-100 active:bg-gray-100 transition-colors opacity-100`}
+              className={`w-full text-left justify-start border ${getOptionStyle(option)} overflow-x-auto whitespace-normal min-h-[48px] h-auto px-4 py-3 hover:bg-gray-100 active:bg-gray-100 transition-colors`}
               disabled={!!selectedAnswer || timeRemaining === 0}
             >
               <span className="break-words">{option}</span>
