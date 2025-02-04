@@ -53,6 +53,24 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
     }
   }, [timeRemaining]);
 
+  const getOptionStyle = (option: string) => {
+    if (!selectedAnswer) {
+      return "bg-white text-black hover:bg-gray-100 font-normal";
+    }
+    
+    const isCorrect = option[0] === currentQuestion?.correctAnswer;
+    
+    if (isCorrect) {
+      return "bg-[#E7F8E9] text-black border-[#86D492] font-normal";
+    }
+    
+    if (selectedAnswer === option[0] && !isCorrect) {
+      return "bg-[#FFE9E9] text-black border-[#FF8989] font-normal";
+    }
+    
+    return "bg-white text-black font-normal";
+  };
+
   const loadQuestion = async () => {
     const topicString = topic ? `${chapter} - ${topic}` : chapter;
     const scope = chapter === "Complete Subject" ? subject : `${subject} - ${topicString}`;
@@ -96,24 +114,6 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const getOptionStyle = (option: string) => {
-    if (!selectedAnswer) {
-      return "bg-white text-black hover:bg-gray-100";
-    }
-    
-    const isCorrect = option[0] === currentQuestion?.correctAnswer;
-    
-    if (isCorrect) {
-      return "bg-[#E7F8E9] text-black border-[#86D492]";
-    }
-    
-    if (selectedAnswer === option[0] && !isCorrect) {
-      return "bg-[#FFE9E9] text-black border-[#FF8989]";
-    }
-    
-    return "bg-white text-black";
-  };
-
   if (isQuizComplete) {
     return (
       <QuizResults 
@@ -155,8 +155,9 @@ export const Quiz = ({ subject, chapter, topic, difficulty, questionCount, timeL
               onClick={() => handleAnswerSelect(option[0])}
               className={`w-full text-left justify-start border ${getOptionStyle(option)} overflow-x-auto whitespace-normal min-h-[48px] h-auto px-4 py-3 hover:bg-gray-100 active:bg-gray-100 transition-colors`}
               disabled={!!selectedAnswer || timeRemaining === 0}
+              variant="outline"
             >
-              <span className="break-words">{option}</span>
+              <span className="break-words text-base">{option}</span>
             </Button>
           ))}
         </div>
