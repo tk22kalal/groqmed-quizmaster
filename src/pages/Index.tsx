@@ -50,21 +50,22 @@ const Index = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Clear any existing session first
-        const existingSession = await supabase.auth.getSession();
-        if (existingSession.error) {
-          await supabase.auth.signOut();
-        }
-
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) {
-          console.error("Auth error:", error);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
           setIsAuthenticated(false);
           setIsLoading(false);
           return;
         }
 
-        setIsAuthenticated(!!user);
+        if (!session) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
+
+        setIsAuthenticated(true);
         
         // Check if API key exists
         const apiKey = localStorage.getItem("GROQ_API_KEY");
@@ -79,11 +80,12 @@ const Index = () => {
     
     checkAuth();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session);
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
         setIsAuthenticated(false);
         navigate('/');
-      } else if (event === 'SIGNED_IN') {
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(true);
       }
     });
@@ -95,8 +97,8 @@ const Index = () => {
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await supabase.auth.signOut();
+      localStorage.removeItem("GROQ_API_KEY"); // Clear API key on logout
       toast.success("Logged out successfully");
       navigate('/');
     } catch (error: any) {
