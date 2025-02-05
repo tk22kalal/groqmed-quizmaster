@@ -1,17 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
-
-console.log('QuizResults - Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-console.log('QuizResults - Supabase Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuizResultsProps {
   score: number;
@@ -36,7 +27,7 @@ export const QuizResults = ({
   const percentage = Math.round((score / totalQuestions) * 100);
   
   useEffect(() => {
-    const saveResult = async () => {
+    const fetchUserName = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
@@ -48,32 +39,13 @@ export const QuizResults = ({
             .single();
           
           setUserName(userData?.name || 'User');
-          
-          const { error } = await supabase
-            .from('quiz_results')
-            .insert([
-              {
-                user_id: user.id,
-                score,
-                total_questions: totalQuestions,
-                percentage,
-                subject,
-                chapter,
-                topic,
-                difficulty
-              }
-            ]);
-            
-          if (error) throw error;
-          toast.success("Result saved successfully!");
         }
       } catch (error: any) {
-        console.error('Error saving result:', error);
-        toast.error("Failed to save result");
+        console.error('Error fetching user name:', error);
       }
     };
     
-    saveResult();
+    fetchUserName();
   }, []);
   
   return (

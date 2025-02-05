@@ -36,45 +36,6 @@ export type Database = {
         }
         Relationships: []
       }
-      quiz_results: {
-        Row: {
-          chapter: string
-          created_at: string
-          difficulty: string
-          id: string
-          percentage: number
-          score: number
-          subject: string
-          topic: string | null
-          total_questions: number
-          user_id: string
-        }
-        Insert: {
-          chapter: string
-          created_at?: string
-          difficulty: string
-          id?: string
-          percentage: number
-          score: number
-          subject: string
-          topic?: string | null
-          total_questions: number
-          user_id: string
-        }
-        Update: {
-          chapter?: string
-          created_at?: string
-          difficulty?: string
-          id?: string
-          percentage?: number
-          score?: number
-          subject?: string
-          topic?: string | null
-          total_questions?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
