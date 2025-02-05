@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  base: "/", // This will be updated to match your repository name
+  base: "/groqmed-quizmaster/", // Updated to match repository name
   plugins: [
     react(),
     mode === 'development' &&
