@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import { User, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface Profile {
   name: string;
@@ -11,6 +14,7 @@ interface Profile {
 
 export const UserProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -34,6 +38,17 @@ export const UserProfile = () => {
     fetchProfile();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Logged out successfully");
+      navigate('/');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast.error("Failed to logout");
+    }
+  };
+
   if (!profile) return null;
 
   return (
@@ -48,6 +63,14 @@ export const UserProfile = () => {
         <span className="font-medium text-sm">{profile.name}</span>
         <span className="text-xs text-muted-foreground">{profile.college_name}</span>
       </div>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={handleLogout}
+        className="ml-2"
+      >
+        <LogOut className="h-5 w-5 text-muted-foreground hover:text-primary" />
+      </Button>
     </div>
   );
 };

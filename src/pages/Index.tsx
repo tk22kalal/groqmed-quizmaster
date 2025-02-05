@@ -143,19 +143,14 @@ const Index = () => {
 
   if (quizStarted) {
     return (
-      <div className="relative">
-        <div className="absolute top-4 right-4 z-10">
-          <UserProfile />
-        </div>
-        <Quiz
-          subject={selectedSubject}
-          chapter={selectedChapter}
-          topic={specificTopic}
-          difficulty={difficulty}
-          questionCount={questionCount}
-          timeLimit={timeLimit}
-        />
-      </div>
+      <Quiz
+        subject={selectedSubject}
+        chapter={selectedChapter}
+        topic={specificTopic}
+        difficulty={difficulty}
+        questionCount={questionCount}
+        timeLimit={timeLimit}
+      />
     );
   }
 
@@ -163,16 +158,14 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       {isAuthenticated && hasApiKey && !quizStarted && (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md space-y-6">
+          <h1 className="text-3xl font-bold text-medical-blue">
+            NEET PG Quiz Setup
+          </h1>
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-medical-blue">
-              NEET PG Quiz Setup
-            </h1>
-            <div className="flex items-center gap-4">
-              <UserProfile />
-              <Button onClick={handleLogout} variant="outline">
-                Logout
-              </Button>
-            </div>
+            <UserProfile />
+            <Button onClick={handleLogout} variant="outline">
+              Logout
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
