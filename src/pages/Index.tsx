@@ -9,7 +9,6 @@ import { AuthForm } from "@/components/AuthForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { UserProfile } from "@/components/UserProfile";
 
 const subjects = [
   "Complete MBBS",
@@ -68,7 +67,6 @@ const Index = () => {
 
         setIsAuthenticated(true);
         
-        // Check if API key exists
         const apiKey = localStorage.getItem("GROQ_API_KEY");
         setHasApiKey(!!apiKey);
       } catch (error) {
@@ -82,10 +80,9 @@ const Index = () => {
     checkAuth();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session);
       if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
-        localStorage.removeItem("GROQ_API_KEY"); // Clear API key on logout
+        localStorage.removeItem("GROQ_API_KEY");
         navigate('/');
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(true);
@@ -96,22 +93,6 @@ const Index = () => {
       subscription.unsubscribe();
     };
   }, [navigate]);
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      localStorage.removeItem("GROQ_API_KEY"); // Clear API key on logout
-      toast.success("Logged out successfully");
-      navigate('/');
-    } catch (error: any) {
-      console.error('Logout error:', error);
-      toast.error(error.message);
-    }
-  };
-
-  const handleApiKeySaved = () => {
-    setHasApiKey(true);
-  };
 
   const handleStartQuiz = () => {
     if (!selectedSubject) {
@@ -131,14 +112,12 @@ const Index = () => {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  // Show auth form if not authenticated
   if (!isAuthenticated) {
     return <AuthForm onAuthSuccess={() => setIsAuthenticated(true)} />;
   }
 
-  // Show API key input if authenticated but no API key
   if (!hasApiKey) {
-    return <ApiKeyInput onSave={handleApiKeySaved} />;
+    return <ApiKeyInput onSave={() => setHasApiKey(true)} />;
   }
 
   if (quizStarted) {
@@ -156,126 +135,118 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      {isAuthenticated && hasApiKey && !quizStarted && (
-        <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md space-y-6">
-          <h1 className="text-3xl font-bold text-medical-blue">
-            NEET PG Quiz Setup
-          </h1>
-          <div className="flex justify-between items-center">
-            <UserProfile />
-            <Button onClick={handleLogout} variant="outline">
-              Logout
-            </Button>
+      <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md space-y-6">
+        <h1 className="text-3xl font-bold text-medical-blue">
+          NEET PG Quiz Setup
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="subject">Subject</Label>
+            <Select onValueChange={setSelectedSubject} value={selectedSubject}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Subject" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {subjects.map((subject) => (
+                  <SelectItem key={subject} value={subject}>
+                    {subject}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Select onValueChange={setSelectedSubject} value={selectedSubject}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select Subject" />
-                </SelectTrigger>
-                <SelectContent className="bg-white shadow-lg border-2">
-                  {subjects.map((subject) => (
-                    <SelectItem key={subject} value={subject}>
-                      {subject}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="chapter">Chapter</Label>
-              <Select 
-                onValueChange={setSelectedChapter} 
-                value={selectedChapter}
-                disabled={!selectedSubject || selectedSubject === "Complete MBBS"}
-              >
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select Chapter" />
-                </SelectTrigger>
-                <SelectContent className="bg-white shadow-lg border-2">
-                  {selectedSubject && chapters[selectedSubject as keyof typeof chapters]?.map((chapter) => (
-                    <SelectItem key={chapter} value={chapter}>
-                      {chapter}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="topic">Specific Topic (Optional)</Label>
-              <Input
-                id="topic"
-                placeholder="Enter specific topic"
-                value={specificTopic}
-                onChange={(e) => setSpecificTopic(e.target.value)}
-                disabled={!selectedChapter || selectedChapter === "Complete Subject"}
-                className="bg-white"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty Level</Label>
-              <Select onValueChange={setDifficulty} value={difficulty}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select Difficulty" />
-                </SelectTrigger>
-                <SelectContent className="bg-white shadow-lg border-2">
-                  {difficultyLevels.map((level) => (
-                    <SelectItem key={level} value={level.toLowerCase()}>
-                      {level}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="questionCount">Number of Questions</Label>
-              <Select onValueChange={setQuestionCount} value={questionCount}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select Question Count" />
-                </SelectTrigger>
-                <SelectContent className="bg-white shadow-lg border-2">
-                  {questionCounts.map((count) => (
-                    <SelectItem key={count} value={count}>
-                      {count}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="timeLimit">Time per Question (seconds)</Label>
-              <Select onValueChange={setTimeLimit} value={timeLimit}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select Time per Question" />
-                </SelectTrigger>
-                <SelectContent className="bg-white shadow-lg border-2">
-                  {timePerQuestion.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time} {time !== "No Limit" ? "seconds" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="mt-8 flex justify-center">
-            <Button
-              onClick={handleStartQuiz}
-              className="bg-medical-blue hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold"
+          <div className="space-y-2">
+            <Label htmlFor="chapter">Chapter</Label>
+            <Select 
+              onValueChange={setSelectedChapter} 
+              value={selectedChapter}
+              disabled={!selectedSubject || selectedSubject === "Complete MBBS"}
             >
-              Start Quiz
-            </Button>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Chapter" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {selectedSubject && chapters[selectedSubject as keyof typeof chapters]?.map((chapter) => (
+                  <SelectItem key={chapter} value={chapter}>
+                    {chapter}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="topic">Specific Topic (Optional)</Label>
+            <Input
+              id="topic"
+              placeholder="Enter specific topic"
+              value={specificTopic}
+              onChange={(e) => setSpecificTopic(e.target.value)}
+              disabled={!selectedChapter || selectedChapter === "Complete Subject"}
+              className="bg-white"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="difficulty">Difficulty Level</Label>
+            <Select onValueChange={setDifficulty} value={difficulty}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Difficulty" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {difficultyLevels.map((level) => (
+                  <SelectItem key={level} value={level.toLowerCase()}>
+                    {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="questionCount">Number of Questions</Label>
+            <Select onValueChange={setQuestionCount} value={questionCount}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Question Count" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {questionCounts.map((count) => (
+                  <SelectItem key={count} value={count}>
+                    {count}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="timeLimit">Time per Question (seconds)</Label>
+            <Select onValueChange={setTimeLimit} value={timeLimit}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Time per Question" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {timePerQuestion.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time} {time !== "No Limit" ? "seconds" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      )}
+
+        <div className="mt-8 flex justify-center">
+          <Button
+            onClick={handleStartQuiz}
+            className="bg-medical-blue hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold"
+          >
+            Start Quiz
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
