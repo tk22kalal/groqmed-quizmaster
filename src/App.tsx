@@ -12,6 +12,9 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<AuthForm onAuthSuccess={() => {}} />} />
+          <Route path="/privacy" element={<NotFound />} />
+          <Route path="/disclaimer" element={<NotFound />} />
+          <Route path="/about" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Layout>
