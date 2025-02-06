@@ -1,8 +1,8 @@
-import { UserProfile } from "./UserProfile";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { UserProfile } from "./UserProfile";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -49,7 +49,7 @@ export const Layout = ({ children }: LayoutProps) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, !!session);
       
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
         localStorage.clear(); // Clear all local storage
         navigate('/auth');
