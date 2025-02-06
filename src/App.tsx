@@ -7,7 +7,7 @@ import { AuthForm } from "@/components/AuthForm";
 
 const App = () => {
   return (
-    <Router>
+    <Router basename={import.meta.env.BASE_URL}>
       <Layout>
         <Routes>
           <Route path="/" element={<Index />} />
