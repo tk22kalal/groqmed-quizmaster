@@ -13,7 +13,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-  const isAuthPage = location.pathname.includes('auth');
+  const isAuthPage = location.pathname === '/auth';
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,6 +32,8 @@ export const Layout = ({ children }: LayoutProps) => {
         setIsAuthenticated(!!session);
         if (!session && !isAuthPage) {
           navigate('/auth');
+        } else if (session && isAuthPage) {
+          navigate('/');
         }
       } catch (error) {
         console.error("Auth check error:", error);
@@ -62,6 +64,8 @@ export const Layout = ({ children }: LayoutProps) => {
         setIsAuthenticated(!!session);
         if (!session && !isAuthPage) {
           navigate('/auth');
+        } else if (session && isAuthPage) {
+          navigate('/');
         }
       }
     });
