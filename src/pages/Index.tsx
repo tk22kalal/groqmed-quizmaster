@@ -1,102 +1,249 @@
-import { Navigation } from "@/components/Navigation";
+import { useState, useEffect } from "react";
+import { ApiKeyInput } from "@/components/ApiKeyInput";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Quiz } from "@/components/Quiz";
+import { AuthForm } from "@/components/AuthForm";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
+const subjects = [
+  "Complete MBBS",
+  "Anatomy",
+  "Physiology",
+  "Biochemistry",
+  "Pathology",
+  "Pharmacology",
+  "Microbiology",
+  "Medicine",
+  "Surgery",
+  "Obstetrics & Gynecology",
+  "Pediatrics"
+];
+
+const chapters = {
+  Anatomy: ["Complete Subject", "Head & Neck", "Thorax", "Abdomen", "Upper Limb", "Lower Limb", "Neuroanatomy"],
+  Physiology: ["Complete Subject", "General Physiology", "Blood", "Nerve-Muscle", "CNS", "CVS", "Respiratory", "Renal", "GIT", "Endocrine"],
+  // ... Add chapters for other subjects
+};
+
+const difficultyLevels = ["Easy", "Medium", "Hard"];
+const questionCounts = ["5", "10", "15", "20", "30", "50", "No Limit"];
+const timePerQuestion = ["30", "45", "60", "90", "120", "No Limit"];
+
 const Index = () => {
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [selectedChapter, setSelectedChapter] = useState<string>("");
+  const [specificTopic, setSpecificTopic] = useState<string>("");
+  const [difficulty, setDifficulty] = useState<string>("easy");
+  const [questionCount, setQuestionCount] = useState<string>("No Limit");
+  const [timeLimit, setTimeLimit] = useState<string>("No Limit");
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasApiKey, setHasApiKey] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!session) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
+
+        setIsAuthenticated(true);
+        
+        const apiKey = localStorage.getItem("GROQ_API_KEY");
+        setHasApiKey(!!apiKey);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+        localStorage.removeItem("GROQ_API_KEY");
+        navigate('/');
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setIsAuthenticated(true);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  const handleStartQuiz = () => {
+    if (!selectedSubject) {
+      toast.error("Please select a subject");
+      return;
+    }
+
+    if (selectedSubject !== "Complete MBBS" && !selectedChapter) {
+      toast.error("Please select a chapter");
+      return;
+    }
+
+    setQuizStarted(true);
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <AuthForm onAuthSuccess={() => setIsAuthenticated(true)} />;
+  }
+
+  if (!hasApiKey) {
+    return <ApiKeyInput onSave={() => setHasApiKey(true)} />;
+  }
+
+  if (quizStarted) {
+    return (
+      <Quiz
+        subject={selectedSubject}
+        chapter={selectedChapter}
+        topic={specificTopic}
+        difficulty={difficulty}
+        questionCount={questionCount}
+        timeLimit={timeLimit}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
-      {/* Hero Section */}
-      <div className="pt-20 pb-12 md:pt-24 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              AI-Powered Medical Exam Preparation Platform
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Revolutionize your NEET PG, USMLE, FMGE, INICET, and MBBS exam preparation with personalized AI-generated questions and comprehensive explanations.
-            </p>
-            <Button 
-              className="bg-medical-blue text-white hover:bg-blue-700 text-lg px-8 py-3"
-              onClick={() => navigate("/auth")}
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md space-y-6">
+        <h1 className="text-3xl font-bold text-medical-blue">
+          NEET PG Quiz Setup
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="subject">Subject</Label>
+            <Select onValueChange={setSelectedSubject} value={selectedSubject}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Subject" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {subjects.map((subject) => (
+                  <SelectItem key={subject} value={subject}>
+                    {subject}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="chapter">Chapter</Label>
+            <Select 
+              onValueChange={setSelectedChapter} 
+              value={selectedChapter}
+              disabled={!selectedSubject || selectedSubject === "Complete MBBS"}
             >
-              Start Free Practice
-            </Button>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Chapter" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {selectedSubject && chapters[selectedSubject as keyof typeof chapters]?.map((chapter) => (
+                  <SelectItem key={chapter} value={chapter}>
+                    {chapter}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="topic">Specific Topic (Optional)</Label>
+            <Input
+              id="topic"
+              placeholder="Enter specific topic"
+              value={specificTopic}
+              onChange={(e) => setSpecificTopic(e.target.value)}
+              disabled={!selectedChapter || selectedChapter === "Complete Subject"}
+              className="bg-white"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="difficulty">Difficulty Level</Label>
+            <Select onValueChange={setDifficulty} value={difficulty}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Difficulty" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {difficultyLevels.map((level) => (
+                  <SelectItem key={level} value={level.toLowerCase()}>
+                    {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="questionCount">Number of Questions</Label>
+            <Select onValueChange={setQuestionCount} value={questionCount}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Question Count" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {questionCounts.map((count) => (
+                  <SelectItem key={count} value={count}>
+                    {count}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="timeLimit">Time per Question (seconds)</Label>
+            <Select onValueChange={setTimeLimit} value={timeLimit}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Time per Question" />
+              </SelectTrigger>
+              <SelectContent className="bg-white shadow-lg border-2">
+                {timePerQuestion.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time} {time !== "No Limit" ? "seconds" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </div>
 
-      {/* Getting Started Section */}
-      <div className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Getting Started with MedQuiz AI</h2>
-          
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="space-y-6">
-              <h3 className="text-2xl font-semibold text-medical-blue">Step 1: Obtain Your Groq AI API Key</h3>
-              <ol className="list-decimal list-inside space-y-4 text-gray-700">
-                <li>Visit the official Groq AI Console at console.groq.com</li>
-                <li>Create a new account or sign in to your existing account</li>
-                <li>Navigate to the API section in your dashboard</li>
-                <li>Generate a new API key for MedQuiz AI integration</li>
-                <li>Copy your API key and keep it secure</li>
-              </ol>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="text-2xl font-semibold text-medical-blue">Step 2: Explore Our Platform</h3>
-              <div className="space-y-4 text-gray-700">
-                <p>MedQuiz AI is designed for medical students and professionals preparing for:</p>
-                <ul className="list-disc list-inside space-y-2">
-                  <li><span className="font-medium">NEET PG:</span> National Eligibility cum Entrance Test for Postgraduates</li>
-                  <li><span className="font-medium">USMLE:</span> United States Medical Licensing Examination</li>
-                  <li><span className="font-medium">FMGE:</span> Foreign Medical Graduate Examination</li>
-                  <li><span className="font-medium">INICET:</span> INI Combined Entrance Test</li>
-                  <li><span className="font-medium">MBBS:</span> Bachelor of Medicine and Bachelor of Surgery</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Why Choose MedQuiz AI?</h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-semibold text-medical-blue mb-4">Personalized Learning</h3>
-              <p className="text-gray-600">AI-generated questions adapt to your knowledge level and learning pace.</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-semibold text-medical-blue mb-4">Comprehensive Coverage</h3>
-              <p className="text-gray-600">Access questions from all major medical subjects and specializations.</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-semibold text-medical-blue mb-4">Detailed Explanations</h3>
-              <p className="text-gray-600">Get in-depth explanations and references for each question.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="py-16 bg-gradient-to-r from-medical-blue to-blue-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">Ready to Excel in Your Medical Exams?</h2>
-          <p className="text-xl text-blue-100 mb-8">Join thousands of medical students preparing smarter with AI.</p>
-          <Button 
-            className="bg-white text-medical-blue hover:bg-gray-100 text-lg px-8 py-3"
-            onClick={() => navigate("/auth")}
+        <div className="mt-8 flex justify-center">
+          <Button
+            onClick={handleStartQuiz}
+            className="bg-medical-blue hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold"
           >
-            Start Free Practice Now
+            Start Quiz
           </Button>
         </div>
       </div>
