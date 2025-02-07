@@ -7,48 +7,28 @@ export const Navigation = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    setIsMenuOpen(false);
-  };
-
   return (
     <nav className="bg-white shadow-md fixed w-full z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
-            <Button 
-              variant="ghost" 
-              className="text-2xl font-bold text-medical-blue"
-              onClick={() => handleNavigation("/")}
-            >
-              MedQuiz AI
-            </Button>
+            <h1 className="text-2xl font-bold text-medical-blue">MedQuiz AI</h1>
           </div>
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => handleNavigation("/privacy")}
-            >
+            <Button variant="ghost" onClick={() => navigate("/privacy")}>
               Privacy Policy
             </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => handleNavigation("/disclaimer")}
-            >
+            <Button variant="ghost" onClick={() => navigate("/disclaimer")}>
               Disclaimer
             </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => handleNavigation("/about")}
-            >
+            <Button variant="ghost" onClick={() => navigate("/about")}>
               About Us
             </Button>
             <Button 
               className="bg-medical-blue text-white hover:bg-blue-700"
-              onClick={() => handleNavigation("/auth")}
+              onClick={() => navigate("/auth")}
             >
               Login / Sign Up
             </Button>
@@ -73,27 +53,39 @@ export const Navigation = () => {
             <Button
               variant="ghost"
               className="w-full text-left"
-              onClick={() => handleNavigation("/privacy")}
+              onClick={() => {
+                navigate("/privacy");
+                setIsMenuOpen(false);
+              }}
             >
               Privacy Policy
             </Button>
             <Button
               variant="ghost"
               className="w-full text-left"
-              onClick={() => handleNavigation("/disclaimer")}
+              onClick={() => {
+                navigate("/disclaimer");
+                setIsMenuOpen(false);
+              }}
             >
               Disclaimer
             </Button>
             <Button
               variant="ghost"
               className="w-full text-left"
-              onClick={() => handleNavigation("/about")}
+              onClick={() => {
+                navigate("/about");
+                setIsMenuOpen(false);
+              }}
             >
               About Us
             </Button>
             <Button
               className="w-full bg-medical-blue text-white hover:bg-blue-700"
-              onClick={() => handleNavigation("/auth")}
+              onClick={() => {
+                navigate("/auth");
+                setIsMenuOpen(false);
+              }}
             >
               Login / Sign Up
             </Button>
